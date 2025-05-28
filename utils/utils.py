@@ -1,6 +1,6 @@
 import math
 
-def is_close(a, b, tol=1e-6):
+def is_equal(a, b, tol=1e-6):
     return math.isclose(a, b, abs_tol=tol)
 
 def less_than(a, b, tol=1e-6):

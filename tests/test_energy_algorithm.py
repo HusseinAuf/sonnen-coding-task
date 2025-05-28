@@ -1,5 +1,5 @@
 import pytest
-from ..utils import greater_than, less_than, is_close
+from utils.utils import greater_than, less_than, is_equal
 
 @pytest.fixture(autouse=True)
 def reset_dut(dut):
@@ -51,12 +51,10 @@ def set_batteries(dut, count=3, voltage=48, temperature=30, max_power=2000):
         dut.set(f"storage.battery[{i}].temperature", temperature)
         dut.set(f"storage.battery[{i}].max_power", max_power)
 
-
 # --- Tests ---
 def test_pv_exceeds_house_consumption_and_storage_not_full(dut):
     set_photovoltaics(dut, 5000) # power 5000 W
     set_house(dut, 2000) # power 2000 W
-    
     set_inverter(dut)
     set_batteries(dut)
     
@@ -69,16 +67,14 @@ def test_pv_exceeds_house_consumption_and_storage_not_full(dut):
         f"Expected charging mode with positive storage command (value > 1e-6), "
         f"but got {storage_power_command} W"
     )
-    assert is_close(grid_power, 0), (
+    assert is_equal(grid_power, 0), (
         f"Expected grid power to be 0 (-1e6 < value < 1e6) (no import/export), "
         f"but got {grid_power} W"
     )
 
-
 def test_pv_exceeds_house_consumption_and_storage_full(dut):
     set_photovoltaics(dut, 5000) # power 5000 W
     set_house(dut, 2000) # power 2000 W
-    
     set_inverter(dut)
     set_batteries(dut)
     
@@ -87,7 +83,7 @@ def test_pv_exceeds_house_consumption_and_storage_full(dut):
 
     storage_power_command = float(dut.get("storage.power_command"))
     grid_power = float(dut.get("grid.power"))
-    assert is_close(storage_power_command, 0), (
+    assert is_equal(storage_power_command, 0), (
         f"Expected storage power command to be 0 (-1e6 < value < 1e6) (no charge/discharge), "
         f"but got {storage_power_command} W"
     )
@@ -99,7 +95,6 @@ def test_pv_exceeds_house_consumption_and_storage_full(dut):
 def test_house_consumption_exceeds_pv_and_storage_not_empty(dut):
     set_photovoltaics(dut, 1000) # power 1000 W
     set_house(dut, 2000) # power 2000 W
-    
     set_inverter(dut)
     set_batteries(dut)
     
@@ -112,7 +107,7 @@ def test_house_consumption_exceeds_pv_and_storage_not_empty(dut):
         f"Expected discharging mode with negative storage command (value < -1e-6), "
         f"but got {storage_power_command} W"
     )
-    assert is_close(grid_power, 0), (
+    assert is_equal(grid_power, 0), (
         f"Expected grid power to be 0 (-1e6 < value < 1e6) (no import/export), "
         f"but got {grid_power} W"
     )
@@ -120,7 +115,6 @@ def test_house_consumption_exceeds_pv_and_storage_not_empty(dut):
 def test_house_consumption_exceeds_pv_and_storage_empty(dut):
     set_photovoltaics(dut, 1000) # power 1000 W
     set_house(dut, 2000) # power 2000 W
-    
     set_inverter(dut)
     set_batteries(dut)
     
@@ -129,7 +123,7 @@ def test_house_consumption_exceeds_pv_and_storage_empty(dut):
 
     storage_power_command = float(dut.get("storage.power_command"))
     grid_power = float(dut.get("grid.power"))
-    assert is_close(storage_power_command, 0), (
+    assert is_equal(storage_power_command, 0), (
         f"Expected storage power command to be 0 (-1e6 < value < 1e6) (no charge/discharge), "
         f"but got {storage_power_command} W"
     )

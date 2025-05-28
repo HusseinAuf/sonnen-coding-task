@@ -32,5 +32,3 @@ It follows these rules:
 - `test_pv_exceeds_house_consumption_and_storage_full`
 - `test_house_consumption_exceeds_pv_and_storage_not_empty`
 - `test_house_consumption_exceeds_pv_and_storage_empty`
-
-Each test sets up a power scenario and checks expected system behavior.
