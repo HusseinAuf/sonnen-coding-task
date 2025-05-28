@@ -1,9 +1,8 @@
 import pytest
 
-# --- Helpers ---
+
 @pytest.fixture(autouse=True)
 def reset_dut(dut):
-    # Reset logic
     dut.set("pv", None)
     dut.set("house", None)
     dut.set("storage", None)
@@ -14,7 +13,7 @@ def reset_dut(dut):
     dut.set("house", None)
     dut.set("storage", None)
 
-
+# --- Helpers ---
 def set_photovoltaics(dut, power=5000, voltage=250):
     current = round(power / voltage, 2)
     dut.set("pv.power", power)
