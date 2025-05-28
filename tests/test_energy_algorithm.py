@@ -1,5 +1,5 @@
 import pytest
-
+from ..utils import greater_than, less_than, is_close
 
 @pytest.fixture(autouse=True)
 def reset_dut(dut):
@@ -42,7 +42,7 @@ def set_storage_system_type(dut, batteries_count):
         2: "standard",
         3: "pro",
     }
-    dut.set("storage.system", batteries_types[batteries_count])
+    dut.set("storage.system_type", batteries_types[batteries_count])
 
 def set_batteries(dut, count=3, voltage=48, temperature=30, max_power=2000):
     set_storage_system_type(dut, count)
@@ -50,6 +50,7 @@ def set_batteries(dut, count=3, voltage=48, temperature=30, max_power=2000):
         dut.set(f"storage.battery[{i}].voltage", voltage)
         dut.set(f"storage.battery[{i}].temperature", temperature)
         dut.set(f"storage.battery[{i}].max_power", max_power)
+
 
 # --- Tests ---
 def test_pv_exceeds_house_consumption_and_storage_not_full(dut):
@@ -64,11 +65,15 @@ def test_pv_exceeds_house_consumption_and_storage_not_full(dut):
 
     storage_power_command = float(dut.get("storage.power_command"))
     grid_power = float(dut.get("grid.power"))
-    assert storage_power_command > 0, (
-        f"Expected charging mode with positive storage command, "
+    assert greater_than(storage_power_command, 0), (
+        f"Expected charging mode with positive storage command (value > 1e-6), "
         f"but got {storage_power_command} W"
     )
-    assert grid_power == 0, f"Expected grid power to be 0 (no import/export), but got {grid_power} W"
+    assert is_close(grid_power, 0), (
+        f"Expected grid power to be 0 (-1e6 < value < 1e6) (no import/export), "
+        f"but got {grid_power} W"
+    )
+
 
 def test_pv_exceeds_house_consumption_and_storage_full(dut):
     set_photovoltaics(dut, 5000) # power 5000 W
@@ -82,11 +87,14 @@ def test_pv_exceeds_house_consumption_and_storage_full(dut):
 
     storage_power_command = float(dut.get("storage.power_command"))
     grid_power = float(dut.get("grid.power"))
-    assert storage_power_command == 0, (
-        f"Expected storage power command to be 0 (no charge/discharge), "
+    assert is_close(storage_power_command, 0), (
+        f"Expected storage power command to be 0 (-1e6 < value < 1e6) (no charge/discharge), "
         f"but got {storage_power_command} W"
     )
-    assert grid_power > 0, f"Expected importing power to grid with positive value, but got {grid_power} W"
+    assert greater_than(grid_power > 0), (
+        f"Expected importing power to grid with positive value (value > 1e-6), "
+        f"but got {grid_power} W"
+    )
 
 def test_house_consumption_exceeds_pv_and_storage_not_empty(dut):
     set_photovoltaics(dut, 1000) # power 1000 W
@@ -100,11 +108,14 @@ def test_house_consumption_exceeds_pv_and_storage_not_empty(dut):
 
     storage_power_command = float(dut.get("storage.power_command"))
     grid_power = float(dut.get("grid.power"))
-    assert storage_power_command < 0, (
-        f"Expected discharging mode with negative storage command, "
+    assert less_than(storage_power_command, 0), (
+        f"Expected discharging mode with negative storage command (value < -1e-6), "
         f"but got {storage_power_command} W"
     )
-    assert grid_power == 0, f"Expected grid power to be 0 (no import/export), but got {grid_power} W"
+    assert is_close(grid_power, 0), (
+        f"Expected grid power to be 0 (-1e6 < value < 1e6) (no import/export), "
+        f"but got {grid_power} W"
+    )
 
 def test_house_consumption_exceeds_pv_and_storage_empty(dut):
     set_photovoltaics(dut, 1000) # power 1000 W
@@ -118,8 +129,11 @@ def test_house_consumption_exceeds_pv_and_storage_empty(dut):
 
     storage_power_command = float(dut.get("storage.power_command"))
     grid_power = float(dut.get("grid.power"))
-    assert storage_power_command == 0, (
-        f"Expected discharging mode with negative storage command, "
+    assert is_close(storage_power_command, 0), (
+        f"Expected storage power command to be 0 (-1e6 < value < 1e6) (no charge/discharge), "
         f"but got {storage_power_command} W"
     )
-    assert grid_power < 0, f"Expected exporting power from grid with negative value, but got {grid_power} W"
+    assert less_than(grid_power, 0), (
+        f"Expected exporting power from grid with negative value (value < -1e-6), "
+        f"but got {grid_power} W"
+    )
